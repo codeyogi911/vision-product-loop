@@ -1,0 +1,20 @@
+{
+  "name": "vision-local",
+  "interface": {
+    "displayName": "Vision Local Plugins"
+  },
+  "plugins": [
+    {
+      "name": "vision-product-loop",
+      "source": {
+        "source": "local",
+        "path": "./plugins/vision-product-loop"
+      },
+      "policy": {
+        "installation": "INSTALLED_BY_DEFAULT",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

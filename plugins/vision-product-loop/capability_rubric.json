@@ -1,0 +1,591 @@
+{
+  "version": 1,
+  "capabilities": [
+    {
+      "id": "vision-contract",
+      "title": "Durable vision contract",
+      "description": "The project has a canonical VISION.md with the product promise, users, realization bar, loop state, batch execution, and autonomy boundary.",
+      "requirements": [
+        {
+          "id": "vision-md-sections",
+          "artifact": "root:VISION.md",
+          "all": [
+            "Product Promise",
+            "Primary Users",
+            "Realization Bar",
+            "Loop State",
+            "Batch Loop Execution",
+            "Autonomy Boundary"
+          ]
+        },
+        {
+          "id": "skill-prefers-vision-md",
+          "artifact": "plugin:skills/vision-product-loop/SKILL.md",
+          "all": [
+            "VISION.md",
+            "canonical product contract"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "grill-alignment",
+      "title": "Grill-based vision alignment",
+      "description": "The plugin bundles grill-me behavior so it can interview users into shared understanding before implementation.",
+      "requirements": [
+        {
+          "id": "bundled-grill-skill",
+          "artifact": "plugin:skills/grill-me/SKILL.md",
+          "all": [
+            "Ask the questions one at a time",
+            "recommended answer",
+            "exploring the codebase",
+            "VISION.md"
+          ]
+        },
+        {
+          "id": "main-skill-uses-grill",
+          "artifact": "plugin:skills/vision-product-loop/SKILL.md",
+          "all": [
+            "skills/grill-me/SKILL.md",
+            "recommended answer",
+            "one at a time",
+            "update `VISION.md` continuously"
+          ]
+        },
+        {
+          "id": "grill-docs",
+          "artifact": "plugin:README.md",
+          "all": [
+            "Grill Alignment",
+            "skills/grill-me/SKILL.md",
+            "one question at a time"
+          ]
+        },
+        {
+          "id": "grill-tests",
+          "artifact": "plugin:tests/test_grill_integration.py",
+          "all": [
+            "test_bundled_grill_skill_contract",
+            "test_main_skill_points_to_bundled_grill"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-visions",
+      "title": "Module visions for deep Modules",
+      "description": "The product loop can split a broad vision into root-level and module-level contracts when a Deep Module needs its own Interface, Implementation options, Seam, Adapter, Leverage, Locality, research questions, and harnesses.",
+      "requirements": [
+        {
+          "id": "root-module-vision-contract",
+          "artifact": "root:VISION.md",
+          "all": [
+            "Module Visions And Deep Modules",
+            "visions/<module-id>.md",
+            "Interface",
+            "Implementation",
+            "Depth",
+            "Seam",
+            "Adapter",
+            "Leverage",
+            "Locality"
+          ]
+        },
+        {
+          "id": "context-module-terms",
+          "artifact": "root:CONTEXT.md",
+          "all": [
+            "Module Vision",
+            "Intelligence Layer",
+            "Interface",
+            "Implementation",
+            "Depth",
+            "Seam",
+            "Adapter",
+            "Leverage",
+            "Locality"
+          ]
+        },
+        {
+          "id": "intelligence-layer-module-vision",
+          "artifact": "root:visions/intelligence-layer.md",
+          "all": [
+            "Intelligence Layer Vision",
+            "Interface",
+            "Implementation Options",
+            "Depth",
+            "Seam",
+            "Adapter",
+            "Leverage",
+            "Locality"
+          ]
+        },
+        {
+          "id": "skill-module-vision-workflow",
+          "artifact": "plugin:skills/vision-product-loop/SKILL.md",
+          "all": [
+            "module visions",
+            "improve-codebase-architecture",
+            "CONTEXT.md",
+            "docs/adr/",
+            "Interface",
+            "Seam"
+          ]
+        },
+        {
+          "id": "readme-module-vision-docs",
+          "artifact": "plugin:README.md",
+          "all": [
+            "Module Visions",
+            "visions/<module-id>.md",
+            "Deep Module",
+            "Intelligence Layer"
+          ]
+        },
+        {
+          "id": "module-vision-tests",
+          "artifact": "plugin:tests/test_module_visions.py",
+          "all": [
+            "test_root_vision_defines_module_visions",
+            "test_context_names_intelligence_layer",
+            "test_skill_uses_architecture_deepening_language"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "operating-loop",
+      "title": "Research-build-verify-test-reflect loop",
+      "description": "The product loop has a named operating cycle that starts from vision, researches the next gap, builds the smallest slice, verifies direct evidence, runs regression tests, reflects against the vision, and resumes safely when the user returns.",
+      "requirements": [
+        {
+          "id": "root-operating-loop-contract",
+          "artifact": "root:VISION.md",
+          "all": [
+            "Operating Loop",
+            "Research:",
+            "Build:",
+            "Verify:",
+            "Test:",
+            "Reflect:",
+            "When the user returns",
+            "Evidence Harnesses",
+            "A harness is an evidence-producing capability"
+          ]
+        },
+        {
+          "id": "context-operating-loop-terms",
+          "artifact": "root:CONTEXT.md",
+          "all": [
+            "Operating Loop",
+            "Harness",
+            "Research, Build, Verify, Test, and Reflect",
+            "evidence-producing capability"
+          ]
+        },
+        {
+          "id": "skill-operating-loop-workflow",
+          "artifact": "plugin:skills/vision-product-loop/SKILL.md",
+          "all": [
+            "Research, Build, Verify, Test, Reflect",
+            "Research:",
+            "Build:",
+            "Verify:",
+            "Test:",
+            "Reflect:",
+            "harness as an evidence-producing capability",
+            "When the user returns"
+          ]
+        },
+        {
+          "id": "readme-operating-loop-docs",
+          "artifact": "plugin:README.md",
+          "all": [
+            "Operating Loop",
+            "Research, Build, Verify, Test, Reflect",
+            "Harnesses",
+            "A harness is an evidence-producing capability"
+          ]
+        },
+        {
+          "id": "self-check-loop-state",
+          "artifact": "plugin:scripts/self_check.py",
+          "all": [
+            "\"phase\"",
+            "\"iteration\"",
+            "\"harnesses\"",
+            "\"reflection\""
+          ]
+        },
+        {
+          "id": "operating-loop-tests",
+          "artifact": "plugin:tests/test_operating_loop.py",
+          "all": [
+            "test_root_vision_defines_operating_loop",
+            "test_skill_uses_loop_phases_and_harness_interface",
+            "test_self_check_state_has_loop_fields"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loop-runner",
+      "title": "Deterministic loop runner",
+      "description": "The plugin includes a deterministic runner that executes the safe automated parts of Research, Build, Verify, Test, and Reflect; records phase events; respects a slice budget; and marks the loop complete when evidence satisfies the vision.",
+      "requirements": [
+        {
+          "id": "root-loop-runner-contract",
+          "artifact": "root:VISION.md",
+          "all": [
+            "run_loop.py",
+            "--slice-budget 5",
+            "Research, Build, Verify, Test, and Reflect",
+            "vision_complete",
+            "Acceptance Checks"
+          ]
+        },
+        {
+          "id": "skill-loop-runner-workflow",
+          "artifact": "plugin:skills/vision-product-loop/SKILL.md",
+          "all": [
+            "run_loop.py",
+            "--slice-budget 5",
+            "Research, Build, Verify, Test, and Reflect",
+            "stop_reason: vision_complete"
+          ]
+        },
+        {
+          "id": "readme-loop-runner-docs",
+          "artifact": "plugin:README.md",
+          "all": [
+            "run_loop.py",
+            "--slice-budget 5",
+            "status: complete",
+            "stop_reason: vision_complete"
+          ]
+        },
+        {
+          "id": "loop-runner-script",
+          "artifact": "plugin:scripts/run_loop.py",
+          "all": [
+            "run_loop",
+            "slice_budget",
+            "Research",
+            "Build",
+            "Verify",
+            "Test",
+            "Reflect",
+            "vision_complete"
+          ]
+        },
+        {
+          "id": "loop-runner-tests",
+          "artifact": "plugin:tests/test_run_loop.py",
+          "all": [
+            "test_marks_complete_when_no_gaps_and_validation_passes",
+            "test_self_check_exits_zero_after_loop_marks_complete",
+            "test_reports_selected_gap_when_plugin_is_incomplete"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "adaptive-realization",
+      "title": "Adaptive end-to-end realization",
+      "description": "The skill can take a user from vision to project end to end by selecting or creating the tools needed for that specific goal.",
+      "requirements": [
+        {
+          "id": "skill-adaptive-tools",
+          "artifact": "plugin:skills/vision-product-loop/SKILL.md",
+          "all": [
+            "end to end",
+            "provide",
+            "select",
+            "create",
+            "orchestrate"
+          ]
+        },
+        {
+          "id": "readme-adaptive-tools",
+          "artifact": "plugin:README.md",
+          "all": [
+            "end to end",
+            "provide",
+            "select",
+            "create",
+            "orchestrate"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "batch-iteration",
+      "title": "Batch iteration",
+      "description": "The loop can run multiple autonomous slices before returning to the user, with a clear stop reason.",
+      "requirements": [
+        {
+          "id": "skill-batch-loop",
+          "artifact": "plugin:skills/vision-product-loop/SKILL.md",
+          "all": [
+            "slice budget",
+            "why it stopped",
+            "stop"
+          ]
+        },
+        {
+          "id": "state-stop-reason",
+          "artifact": "root:VISION.md",
+          "all": [
+            "stop_reason"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "machine-state",
+      "title": "Machine-readable loop state",
+      "description": "Operational loop state is stored separately from product intent and can be consumed by scripts or agents.",
+      "requirements": [
+        {
+          "id": "skill-state-json",
+          "artifact": "plugin:skills/vision-product-loop/SKILL.md",
+          "all": [
+            ".vision-loop/state.json",
+            "phase",
+            "harnesses",
+            "reflection",
+            "selected_gap",
+            "remaining_gaps",
+            "next_actions"
+          ]
+        },
+        {
+          "id": "self-check-writes-state",
+          "artifact": "plugin:scripts/self_check.py",
+          "all": [
+            "state_path.write_text",
+            "stop_reason"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "self-check-proof",
+      "title": "Self-check proof harness",
+      "description": "The plugin can inspect itself against the vision and produce the next concrete gap unless the loop is complete.",
+      "requirements": [
+        {
+          "id": "self-check-script",
+          "artifact": "plugin:scripts/self_check.py",
+          "all": [
+            "run_self_check",
+            "gap_detection_exhausted"
+          ]
+        },
+        {
+          "id": "self-check-tests",
+          "artifact": "plugin:tests/test_self_check.py",
+          "all": [
+            "test_writes_state_file",
+            "test_reports_gap_when_main_skill_is_missing"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "project-discovery",
+      "title": "Project control-plane discovery",
+      "description": "The plugin can discover the repo's docs, agents, architecture signals, and harnesses before inventing process.",
+      "requirements": [
+        {
+          "id": "discovery-helper",
+          "artifact": "plugin:scripts/discover_project.py",
+          "all": [
+            "discover_project",
+            "harnesses",
+            "agents",
+            "docs"
+          ]
+        },
+        {
+          "id": "discovery-docs",
+          "artifact": "plugin:README.md",
+          "all": [
+            "discover_project.py",
+            "control plane"
+          ]
+        },
+        {
+          "id": "discovery-tests",
+          "artifact": "plugin:tests/test_discover_project.py",
+          "all": [
+            "test_discovers_docs_agents_and_harnesses",
+            "discover_project"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "validation-evidence",
+      "title": "Validation evidence capture",
+      "description": "The self-check can run the plugin's local tests and record validation evidence in machine state.",
+      "requirements": [
+        {
+          "id": "self-check-run-tests",
+          "artifact": "plugin:scripts/self_check.py",
+          "all": [
+            "--run-tests",
+            "subprocess.run",
+            "validation_tests"
+          ]
+        },
+        {
+          "id": "validation-docs",
+          "artifact": "plugin:README.md",
+          "all": [
+            "--run-tests",
+            "validation evidence"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "harness-planning",
+      "title": "Harness planning",
+      "description": "When a project lacks an obvious proof path, the plugin can propose the smallest harness needed to validate progress toward the vision.",
+      "requirements": [
+        {
+          "id": "harness-planner",
+          "artifact": "plugin:scripts/plan_harness.py",
+          "all": [
+            "plan_harness",
+            "shortest evidence path",
+            "harnesses"
+          ]
+        },
+        {
+          "id": "harness-planner-tests",
+          "artifact": "plugin:tests/test_plan_harness.py",
+          "all": [
+            "test_plans_harness_when_project_has_none",
+            "plan_harness"
+          ]
+        },
+        {
+          "id": "harness-planner-docs",
+          "artifact": "plugin:README.md",
+          "all": [
+            "plan_harness.py",
+            "shortest evidence path"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "harness-creation",
+      "title": "Harness creation",
+      "description": "When the selected shortest evidence path requires a missing harness, the plugin can create the smallest safe project-local proof tool.",
+      "requirements": [
+        {
+          "id": "harness-creator",
+          "artifact": "plugin:scripts/create_harness.py",
+          "all": [
+            "create_harness",
+            "--apply",
+            "dry_run",
+            "force"
+          ]
+        },
+        {
+          "id": "harness-creator-tests",
+          "artifact": "plugin:tests/test_create_harness.py",
+          "all": [
+            "test_dry_run_does_not_write_files",
+            "test_apply_creates_scripted_check",
+            "create_harness"
+          ]
+        },
+        {
+          "id": "harness-creator-docs",
+          "artifact": "plugin:README.md",
+          "all": [
+            "create_harness.py",
+            "--apply",
+            "dry-run"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "orchestration-planning",
+      "title": "Agent and tool orchestration planning",
+      "description": "The plugin can plan which work should stay local, which helpers to use, and when sub-agent delegation is appropriate under the host/user boundary.",
+      "requirements": [
+        {
+          "id": "orchestration-planner",
+          "artifact": "plugin:scripts/plan_orchestration.py",
+          "all": [
+            "plan_orchestration",
+            "local",
+            "delegate",
+            "autonomy_boundary"
+          ]
+        },
+        {
+          "id": "orchestration-tests",
+          "artifact": "plugin:tests/test_plan_orchestration.py",
+          "all": [
+            "test_keeps_blocking_work_local",
+            "test_delegates_independent_sidecar_when_allowed",
+            "plan_orchestration"
+          ]
+        },
+        {
+          "id": "orchestration-docs",
+          "artifact": "plugin:README.md",
+          "all": [
+            "plan_orchestration.py",
+            "delegate",
+            "autonomy boundary"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "toy-project-proof",
+      "title": "Toy project end-to-end proof",
+      "description": "The plugin can generate a tiny target project, discover missing harnesses, create the smallest proof harness, run it, and record proof.",
+      "requirements": [
+        {
+          "id": "toy-proof-runner",
+          "artifact": "plugin:scripts/run_toy_proof.py",
+          "all": [
+            "run_toy_proof",
+            "discover_project",
+            "plan_harness",
+            "create_harness",
+            "proof"
+          ]
+        },
+        {
+          "id": "toy-proof-tests",
+          "artifact": "plugin:tests/test_run_toy_proof.py",
+          "all": [
+            "test_runs_toy_project_end_to_end",
+            "run_toy_proof"
+          ]
+        },
+        {
+          "id": "toy-proof-docs",
+          "artifact": "plugin:README.md",
+          "all": [
+            "run_toy_proof.py",
+            "toy project",
+            "end-to-end proof"
+          ]
+        }
+      ]
+    }
+  ]
+}

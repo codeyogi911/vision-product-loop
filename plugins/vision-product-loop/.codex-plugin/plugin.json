@@ -1,0 +1,42 @@
+{
+  "name": "vision-product-loop",
+  "version": "0.1.0",
+  "description": "A Codex plugin for turning a product vision into an iterative build loop.",
+  "author": {
+    "name": "Vision Product Loop Maintainers",
+    "email": "maintainers@example.com",
+    "url": "https://example.com/vision-product-loop"
+  },
+  "homepage": "https://example.com/vision-product-loop",
+  "repository": "https://example.com/vision-product-loop.git",
+  "license": "MIT",
+  "keywords": [
+    "vision",
+    "product",
+    "iteration",
+    "agents"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Vision Product Loop",
+    "shortDescription": "Align on a product vision, then iterate until the build matches it.",
+    "longDescription": "Vision Product Loop helps Codex establish a durable product vision, grill unclear intent, discover project-local architecture and harnesses, and run implementation cycles that compare real progress against the agreed goal.",
+    "developerName": "Vision Product Loop Maintainers",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write",
+      "Code",
+      "Review"
+    ],
+    "websiteURL": "https://example.com/vision-product-loop",
+    "privacyPolicyURL": "https://example.com/privacy",
+    "termsOfServiceURL": "https://example.com/terms",
+    "defaultPrompt": [
+      "Turn this vision into an implementation loop.",
+      "Grill me until this product vision is crisp.",
+      "Compare the current product to the vision."
+    ],
+    "brandColor": "#2563EB"
+  }
+}
