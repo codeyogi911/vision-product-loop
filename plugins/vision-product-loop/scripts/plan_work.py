@@ -16,6 +16,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import discover_project  # noqa: E402
+import scaffold_knowledge_map  # noqa: E402
 
 
 DEFAULT_STATE_PATH = Path(".vision-loop") / "state.json"
@@ -211,9 +212,25 @@ def plan_work(
     goal: str | None = None,
     state_path: Path = DEFAULT_STATE_PATH,
     max_files: int = 2000,
+    enforce_knowledge_map_gate: bool = True,
 ) -> dict[str, Any]:
-    """Return a sprint/task/subtask plan with task-end validation cadence."""
+    """Return a sprint/task/subtask plan with task-end validation cadence.
+
+    When `enforce_knowledge_map_gate` is true (default) and `docs/adr/` holds
+    no product ADRs, the returned plan carries a top-level `gate` block and
+    omits the sprint scaffold so callers refuse to advance to Build before the
+    architecture grill has happened.
+    """
     root = root.resolve()
+    if enforce_knowledge_map_gate:
+        gate = scaffold_knowledge_map.knowledge_map_gate(root)
+        if gate is not None:
+            return {
+                "root": str(root),
+                "planning_granularity": "sprint_task_subtask",
+                "test_cadence": "task_end",
+                "gate": gate,
+            }
     discovery = discover_project.discover_project(root, max_files=max_files)
     source = choose_task_source(root, state_path, goal)
     task_id = slugify(source["title"])
@@ -277,6 +294,14 @@ def main() -> None:
         help="Maximum files to inspect while discovering project signals.",
     )
     parser.add_argument("--json", action="store_true", help="Print plan JSON.")
+    parser.add_argument(
+        "--skip-knowledge-map-gate",
+        action="store_true",
+        help=(
+            "Bypass the knowledge-map gate. Use only for diagnostics; the loop "
+            "should normally refuse to plan Build work without recorded ADRs."
+        ),
+    )
     args = parser.parse_args()
 
     plan = plan_work(
@@ -284,6 +309,7 @@ def main() -> None:
         goal=args.goal,
         state_path=Path(args.state),
         max_files=args.max_files,
+        enforce_knowledge_map_gate=not args.skip_knowledge_map_gate,
     )
     print(json.dumps(plan, indent=2))
 

@@ -42,11 +42,11 @@ Ask questions that collapse uncertainty:
 
 After each resolved branch, update `VISION.md` continuously with clarified product intent.
 
-## 3. Establish The Knowledge Map
+## 3. Establish The Knowledge Map (hard gate before Build)
 
 Once `VISION.md` is stable and before substantial Build, run the bundled `knowledge-map` skill (`plugins/vision-product-loop/skills/knowledge-map/SKILL.md`).
 
-It grills the user on every major architecture decision one at a time, records each as an ADR under `docs/adr/`, sketches `ARCHITECTURE.md`, generates `CLAUDE.md` and `AGENTS.md` as ≤100-line tables-of-contents, scaffolds the `docs/{adr,design-docs,exec-plans,references,generated}/` system of record, migrates any scattered decision records with confirmation, and updates `CONTEXT.md` with the new vocabulary.
+It grills the user on every major architecture decision one at a time (runtime, product surface, persistence, deployment, public API), records each as an ADR under `docs/adr/`, sketches `ARCHITECTURE.md`, generates `AGENTS.md` as a ≤100-line table of contents, creates `CLAUDE.md` as a symlink to `AGENTS.md` so every agent reads one source, scaffolds the `docs/{adr,design-docs,exec-plans,references,generated}/` system of record, migrates any scattered decision records with confirmation, and updates `CONTEXT.md` with the new vocabulary.
 
 ```bash
 python3 plugins/vision-product-loop/scripts/scaffold_knowledge_map.py --root <project> --detect --json
@@ -54,7 +54,9 @@ python3 plugins/vision-product-loop/scripts/scaffold_knowledge_map.py --root <pr
 python3 plugins/vision-product-loop/scripts/lint_knowledge_map.py --root <project>
 ```
 
-Detect first, then apply, then lint. The lint check enforces the map line budget, cross-link resolution, ADR section completeness, and exec-plan placement against `.vision-loop/state.json`.
+Detect first, then apply, then lint. The lint check enforces the map line budget, cross-link resolution, ADR section completeness, exec-plan placement against `.vision-loop/state.json`, and that `CLAUDE.md` is a symlink to (or content match of) `AGENTS.md`.
+
+This step is a **hard gate**. `plan_work.py` and `run_loop.py` refuse to plan or run a Build slice while only the bootstrap ADR exists; both emit `stop_reason="knowledge_map_required"` until at least one product architecture decision has been recorded. Decisions about *what kind of product to build* (CLI vs web, Python vs Node, SQLite vs hosted DB, single-binary vs containerised, etc.) are user-owned and must be grilled, not arbitrarily picked by the agent.
 
 Do not scaffold domain-specific docs (`FRONTEND.md`, `SECURITY.md`, etc.). The loop materialises those when the vision calls for them.
 

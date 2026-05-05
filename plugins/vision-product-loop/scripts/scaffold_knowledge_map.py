@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from dataclasses import asdict, dataclass, field
@@ -30,9 +31,14 @@ TARGET_FILES = (
     "VISION.md",
     "CONTEXT.md",
     "ARCHITECTURE.md",
-    "CLAUDE.md",
     "AGENTS.md",
+    "CLAUDE.md",
 )
+
+
+CANONICAL_MAP = "AGENTS.md"
+SYMLINKED_MAP = "CLAUDE.md"
+BOOTSTRAP_ADR = "0001-record-architecture-decisions.md"
 
 
 TARGET_DIRS = (
@@ -159,11 +165,14 @@ codebase the same way.
 """
 
 
-def map_skeleton(target_filename: str) -> str:
-    return f"""# {target_filename}
+def map_skeleton() -> str:
+    return f"""# Agent Map
 
 > Map only. Hard line budget: {DEFAULT_LINE_BUDGET} lines. Add pointers, not
 > content. Deeper sources of truth live under `docs/`.
+>
+> Canonical file: `{CANONICAL_MAP}`. `{SYMLINKED_MAP}` is a symlink to this
+> file so Claude Code, Codex, and any other agent read the same map.
 
 ## Purpose
 
@@ -332,17 +341,45 @@ def apply(root: Path) -> ApplyReport:
         report,
     )
     write_if_missing(
-        root / "CLAUDE.md",
-        map_skeleton("CLAUDE.md"),
+        root / CANONICAL_MAP,
+        map_skeleton(),
         report,
     )
-    write_if_missing(
-        root / "AGENTS.md",
-        map_skeleton("AGENTS.md"),
-        report,
-    )
+    link_claude_to_agents(root, report)
 
     return report
+
+
+def link_claude_to_agents(root: Path, report: ApplyReport) -> None:
+    """Make CLAUDE.md a symlink to AGENTS.md.
+
+    Skips if anything already exists at CLAUDE.md (regular file, working symlink,
+    or broken symlink) so user-authored content is never overwritten. Falls back
+    to a one-line pointer file when symlink creation fails (e.g., a filesystem
+    that does not support symlinks).
+    """
+    claude = root / SYMLINKED_MAP
+    rel = SYMLINKED_MAP
+    # Use os.path.lexists so we treat broken symlinks as "occupied" too.
+    if claude.is_symlink() or os.path.lexists(claude):
+        report.skipped_files.append(rel)
+        return
+    try:
+        claude.symlink_to(CANONICAL_MAP)
+        report.created_files.append(rel)
+        report.notes.append(
+            f"{SYMLINKED_MAP} is a symlink to {CANONICAL_MAP}; both files share one source of truth."
+        )
+    except (OSError, NotImplementedError) as exc:
+        claude.write_text(
+            f"# CLAUDE.md\n\n> See [{CANONICAL_MAP}]({CANONICAL_MAP}). "
+            "This file is a pointer; the canonical map is AGENTS.md.\n",
+            encoding="utf-8",
+        )
+        report.created_files.append(rel)
+        report.notes.append(
+            f"{SYMLINKED_MAP} is a fallback pointer file (symlink unavailable: {exc})."
+        )
 
 
 def write_if_missing(path: Path, content: str, report: ApplyReport) -> None:
@@ -353,6 +390,52 @@ def write_if_missing(path: Path, content: str, report: ApplyReport) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
     report.created_files.append(rel)
+
+
+def knowledge_map_gate(root: Path) -> dict[str, Any] | None:
+    """Return a gate dict if the knowledge map is missing, else None.
+
+    The gate fires when no architecture decisions have been recorded for the
+    product. The bootstrap ADR (`0001-record-architecture-decisions.md`) is the
+    meta-decision to use ADRs at all — it does not count as a product
+    architecture decision. The Vision Product Loop must run the
+    `knowledge-map` skill before Build phases to grill the user on the major
+    architecture choices (CLI vs web, runtime, persistence, etc.).
+    """
+    adr_dir = root / "docs" / "adr"
+    if not adr_dir.is_dir():
+        return {
+            "status": "blocked",
+            "reason": "knowledge_map_required",
+            "detail": (
+                "docs/adr/ does not exist. Run the knowledge-map skill to grill "
+                "the user on architecture decisions before Build."
+            ),
+            "next_actions": [
+                "Invoke plugins/vision-product-loop/skills/knowledge-map/SKILL.md.",
+            ],
+        }
+    product_adrs = [
+        path
+        for path in adr_dir.glob("*.md")
+        if path.name not in {"index.md", "template.md", BOOTSTRAP_ADR}
+    ]
+    if not product_adrs:
+        return {
+            "status": "blocked",
+            "reason": "knowledge_map_required",
+            "detail": (
+                "Only the bootstrap ADR exists; no product architecture "
+                "decisions have been recorded. Run knowledge-map to grill the "
+                "user on the major decisions (runtime, persistence, surface, "
+                "deployment) before Build."
+            ),
+            "next_actions": [
+                "Invoke plugins/vision-product-loop/skills/knowledge-map/SKILL.md.",
+                "Record each committed decision as docs/adr/NNNN-<slug>.md.",
+            ],
+        }
+    return None
 
 
 def detect_payload(report: DetectReport) -> dict[str, Any]:

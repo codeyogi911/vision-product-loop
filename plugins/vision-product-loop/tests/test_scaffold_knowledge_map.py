@@ -75,6 +75,52 @@ class ScaffoldKnowledgeMapTests(unittest.TestCase):
             "# Pre-existing map\n",
         )
 
+    def test_apply_creates_claude_as_symlink_to_agents(self) -> None:
+        scaffold.apply(self.tmp)
+        claude = self.tmp / "CLAUDE.md"
+        agents = self.tmp / "AGENTS.md"
+        self.assertTrue(claude.is_symlink())
+        # Either a bare filename or a relative path that resolves to AGENTS.md.
+        target = (claude.parent / claude.readlink()).resolve()
+        self.assertEqual(target, agents.resolve())
+        # Reading through the symlink yields the canonical content.
+        self.assertEqual(
+            claude.read_text(encoding="utf-8"),
+            agents.read_text(encoding="utf-8"),
+        )
+
+    def test_apply_skips_symlink_when_claude_already_exists(self) -> None:
+        legacy = self.tmp / "CLAUDE.md"
+        legacy.write_text("# Legacy hand-written map\n", encoding="utf-8")
+        scaffold.apply(self.tmp)
+        # Legacy file is preserved as-is; no symlink is created over it.
+        self.assertFalse(legacy.is_symlink())
+        self.assertEqual(
+            legacy.read_text(encoding="utf-8"),
+            "# Legacy hand-written map\n",
+        )
+
+    def test_knowledge_map_gate_fires_when_no_adr_dir(self) -> None:
+        gate = scaffold.knowledge_map_gate(self.tmp)
+        self.assertIsNotNone(gate)
+        self.assertEqual(gate["reason"], "knowledge_map_required")
+
+    def test_knowledge_map_gate_fires_with_only_bootstrap_adr(self) -> None:
+        scaffold.apply(self.tmp)
+        gate = scaffold.knowledge_map_gate(self.tmp)
+        self.assertIsNotNone(gate)
+        self.assertEqual(gate["reason"], "knowledge_map_required")
+
+    def test_knowledge_map_gate_passes_with_a_product_adr(self) -> None:
+        scaffold.apply(self.tmp)
+        product_adr = self.tmp / "docs" / "adr" / "0002-pick-runtime.md"
+        product_adr.write_text(
+            "# 2. Pick runtime\n\n## Status\n\nAccepted\n\n"
+            "## Context\n\nx\n\n## Decision\n\ny\n\n## Consequences\n\nz\n",
+            encoding="utf-8",
+        )
+        self.assertIsNone(scaffold.knowledge_map_gate(self.tmp))
+
     def test_detect_finds_scattered_decision_artefacts(self) -> None:
         notes_dir = self.tmp / "notes"
         notes_dir.mkdir()

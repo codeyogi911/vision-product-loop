@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from dataclasses import asdict, dataclass, field
@@ -23,7 +24,9 @@ DEFAULT_LINE_BUDGET = 100
 DEFAULT_STATE_PATH = ".vision-loop/state.json"
 
 
-MAP_FILES = ("CLAUDE.md", "AGENTS.md")
+CANONICAL_MAP = "AGENTS.md"
+SYMLINKED_MAP = "CLAUDE.md"
+MAP_FILES = (CANONICAL_MAP, SYMLINKED_MAP)
 
 
 REQUIRED_ADR_SECTIONS = ("Status", "Context", "Decision", "Consequences")
@@ -56,7 +59,7 @@ def line_count(path: Path) -> int:
 def lint_map_budget(root: Path, report: LintReport) -> None:
     for filename in MAP_FILES:
         path = root / filename
-        if not path.is_file():
+        if not path.is_file() and not path.is_symlink():
             report.issues.append(
                 LintIssue(
                     severity="warning",
@@ -67,6 +70,17 @@ def lint_map_budget(root: Path, report: LintReport) -> None:
             )
             continue
         report.checked_files.append(filename)
+        if not path.is_file():
+            # Broken symlink.
+            report.issues.append(
+                LintIssue(
+                    severity="error",
+                    rule="map-broken-symlink",
+                    path=filename,
+                    detail=f"{filename} is a broken symlink.",
+                )
+            )
+            continue
         n = line_count(path)
         if n > report.line_budget:
             report.issues.append(
@@ -82,10 +96,61 @@ def lint_map_budget(root: Path, report: LintReport) -> None:
             )
 
 
+def lint_map_symlink(root: Path, report: LintReport) -> None:
+    """CLAUDE.md should be a symlink to AGENTS.md so both share one source.
+
+    If both files exist as separate regular files with diverging content the
+    linter emits a warning so users can decide whether to recover the symlink
+    convention or keep them split intentionally.
+    """
+    canonical = root / CANONICAL_MAP
+    pointer = root / SYMLINKED_MAP
+    if not canonical.is_file():
+        return
+    if pointer.is_symlink():
+        target = os.readlink(pointer)
+        # Accept either the bare filename or an absolute/relative path that
+        # resolves back to the canonical map.
+        resolved = (pointer.parent / target).resolve()
+        if resolved != canonical.resolve():
+            report.issues.append(
+                LintIssue(
+                    severity="warning",
+                    rule="map-symlink-target",
+                    path=SYMLINKED_MAP,
+                    detail=(
+                        f"{SYMLINKED_MAP} symlinks to {target!r}; expected "
+                        f"{CANONICAL_MAP}."
+                    ),
+                )
+            )
+        return
+    if not pointer.is_file():
+        return
+    if pointer.read_text(encoding="utf-8") != canonical.read_text(encoding="utf-8"):
+        report.issues.append(
+            LintIssue(
+                severity="warning",
+                rule="map-divergence",
+                path=SYMLINKED_MAP,
+                detail=(
+                    f"{SYMLINKED_MAP} and {CANONICAL_MAP} are both regular "
+                    "files with different content. Make CLAUDE.md a symlink to "
+                    "AGENTS.md (or a one-line pointer) to keep one source of "
+                    "truth across agents."
+                ),
+            )
+        )
+
+
 def lint_map_links(root: Path, report: LintReport) -> None:
     for filename in MAP_FILES:
         path = root / filename
         if not path.is_file():
+            continue
+        # Skip the symlinked pointer to avoid duplicate reports against the
+        # same content already checked via the canonical map.
+        if filename == SYMLINKED_MAP and path.is_symlink():
             continue
         text = path.read_text(encoding="utf-8")
         for match in LINK_RE.finditer(text):
@@ -201,6 +266,7 @@ def run_lint(
 ) -> LintReport:
     report = LintReport(root=str(root), line_budget=line_budget)
     lint_map_budget(root, report)
+    lint_map_symlink(root, report)
     lint_map_links(root, report)
     lint_adrs(root, report)
     lint_exec_plans(root, state_path, report)

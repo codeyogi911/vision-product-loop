@@ -32,7 +32,7 @@ Stack-agnostic. Discover or create whatever project-local harnesses, skills, scr
 
 1. **Find or establish the vision** — find `VISION.md` or draft the smallest useful form and confirm.
 2. **Grill** — invoke the bundled `grill-me` skill (`skills/grill-me/SKILL.md`) one question at a time; update `VISION.md` as branches resolve.
-3. **Establish the knowledge map** — invoke the bundled `knowledge-map` skill (`skills/knowledge-map/SKILL.md`) to grill on architecture decisions, record ADRs, sketch `ARCHITECTURE.md`, and scaffold `docs/`.
+3. **Establish the knowledge map (hard gate before Build)** — invoke the bundled `knowledge-map` skill (`skills/knowledge-map/SKILL.md`) to grill on architecture decisions (runtime, surface, persistence, deployment), record ADRs, sketch `ARCHITECTURE.md`, and scaffold `docs/`. `plan_work.py` and `run_loop.py` refuse to enter Build until at least one product ADR exists, so do not skip this step.
 4. **Split into module visions** — when a Deep Module needs its own contract, write `visions/<module-id>.md`.
 5. **Plan Sprint/Task/Subtasks** — `python3 plugins/vision-product-loop/scripts/plan_work.py --root <target> --json`.
 6. **Run the operating loop** — Research, Build (with baseline + indicators), Verify, Test, Reflect (with result + decision). Use `scripts/run_loop.py` for the safe automated batch.

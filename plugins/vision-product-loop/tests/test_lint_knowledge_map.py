@@ -44,6 +44,28 @@ class LintKnowledgeMapTests(unittest.TestCase):
         self.assertTrue(report.passed, msg=f"errors: {errors}")
         self.assertEqual(errors, [])
 
+    def test_diverging_regular_files_emit_warning(self) -> None:
+        # Replace the symlink with a regular file whose content differs.
+        claude = self.tmp / "CLAUDE.md"
+        if claude.is_symlink():
+            claude.unlink()
+        claude.write_text("# CLAUDE.md\n\nDiverged content.\n", encoding="utf-8")
+        report = lint.run_lint(self.tmp, self.state_path)
+        rules = {i.rule for i in report.issues}
+        self.assertIn("map-divergence", rules)
+        # Divergence is a warning, not an error; lint still passes.
+        self.assertTrue(report.passed)
+
+    def test_broken_claude_symlink_fails(self) -> None:
+        claude = self.tmp / "CLAUDE.md"
+        if claude.is_symlink() or claude.exists():
+            claude.unlink()
+        claude.symlink_to("does-not-exist.md")
+        report = lint.run_lint(self.tmp, self.state_path)
+        rules = {i.rule for i in report.issues if i.severity == "error"}
+        self.assertIn("map-broken-symlink", rules)
+        self.assertFalse(report.passed)
+
     def test_oversized_map_file_fails_budget_rule(self) -> None:
         big = "\n".join(f"line {i}" for i in range(200)) + "\n"
         (self.tmp / "CLAUDE.md").write_text(big, encoding="utf-8")

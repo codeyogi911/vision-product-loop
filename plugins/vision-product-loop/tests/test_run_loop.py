@@ -47,6 +47,22 @@ class RunLoopTests(unittest.TestCase):
         shutil.copy2(REPO_ROOT / "CONTEXT.md", self.tmpdir / "CONTEXT.md")
         shutil.copytree(REPO_ROOT / "visions", self.tmpdir / "visions")
         self.state_path = self.tmpdir / ".vision-loop" / "state.json"
+        # Seed a product ADR so the knowledge-map gate is satisfied. These
+        # tests exercise the operating loop, not the gate; gate behaviour has
+        # a dedicated test below.
+        self.seed_product_adr()
+
+    def seed_product_adr(self) -> None:
+        adr_dir = self.tmpdir / "docs" / "adr"
+        adr_dir.mkdir(parents=True, exist_ok=True)
+        (adr_dir / "0002-loop-runtime.md").write_text(
+            "# 2. Loop runtime\n\n"
+            "## Status\n\nAccepted\n\n"
+            "## Context\n\nThe loop runs as Python scripts invoked by skills.\n\n"
+            "## Decision\n\nUse Python 3 for harness scripts; no daemon.\n\n"
+            "## Consequences\n\nNo background services; each run is a fresh process.\n",
+            encoding="utf-8",
+        )
 
     def write_applied_proof(self) -> None:
         proof_path = self.tmpdir / ".vision-loop" / "applied-proof.json"
@@ -132,6 +148,28 @@ class RunLoopTests(unittest.TestCase):
         self.assertEqual(state["status"], "planning")
         self.assertEqual(state["stop_reason"], "gap_selected")
         self.assertEqual(state["selected_gap"]["id"], "missing-applied-project-proof")
+
+    def test_gate_blocks_loop_when_no_product_adrs_exist(self) -> None:
+        # Remove the seeded ADR so only the gate check matters.
+        for adr in (self.tmpdir / "docs" / "adr").glob("*.md"):
+            adr.unlink()
+
+        state, exit_code = run_loop_module.run_loop(
+            self.tmpdir,
+            self.plugin_root,
+            self.state_path,
+            slice_budget=5,
+            run_tests=False,
+        )
+
+        self.assertEqual(exit_code, 4)
+        self.assertEqual(state["status"], "blocked")
+        self.assertEqual(state["stop_reason"], "knowledge_map_required")
+        self.assertEqual(state["gate"]["reason"], "knowledge_map_required")
+        # Phases must stop at research; build/verify/test must not have run.
+        phases = [event["phase"] for event in state["loop_events"]]
+        self.assertNotIn("build", phases)
+        self.assertNotIn("verify", phases)
 
     def test_reports_selected_gap_when_plugin_is_incomplete(self) -> None:
         (self.plugin_root / "README.md").unlink()

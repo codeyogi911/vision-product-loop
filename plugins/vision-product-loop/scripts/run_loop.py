@@ -20,6 +20,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import discover_project  # noqa: E402
+import scaffold_knowledge_map  # noqa: E402
 import self_check  # noqa: E402
 import vision_checklist  # noqa: E402
 
@@ -173,8 +174,15 @@ def run_loop(
     state_path: Path,
     slice_budget: int = 5,
     run_tests: bool = True,
+    enforce_knowledge_map_gate: bool = True,
 ) -> tuple[dict[str, Any], int]:
-    """Run deterministic loop phases and write durable loop state."""
+    """Run deterministic loop phases and write durable loop state.
+
+    The knowledge-map gate fires after Research and before Build when no
+    product ADRs exist under `docs/adr/`. When tripped the loop short-circuits
+    with `stop_reason="knowledge_map_required"` so the agent must run the
+    knowledge-map skill (architecture grill) before any Build slice.
+    """
     root = root.resolve()
     plugin_root = plugin_root.resolve()
     state_path = state_path.resolve()
@@ -197,6 +205,39 @@ def run_loop(
                 checklist_missing_sections=checklist["missing_sections"],
             )
         )
+
+        if enforce_knowledge_map_gate:
+            gate = scaffold_knowledge_map.knowledge_map_gate(root)
+            if gate is not None:
+                loop_events.append(
+                    phase_event(
+                        "reflect",
+                        "Knowledge-map gate is open: no product ADRs exist yet.",
+                        stop_reason="knowledge_map_required",
+                        gate=gate,
+                    )
+                )
+                empty_self_state: dict[str, Any] = {
+                    "gaps": [],
+                    "evidence": [],
+                    "selected_gap": None,
+                }
+                final_state = build_final_state(
+                    root,
+                    iteration,
+                    empty_self_state,
+                    discovery,
+                    checklist,
+                    loop_events,
+                    "blocked",
+                    "knowledge_map_required",
+                    gate["detail"],
+                    gate["next_actions"],
+                    run_tests,
+                )
+                final_state["gate"] = gate
+                write_json(state_path, final_state)
+                return final_state, 4
 
         self_state, self_exit_code = self_check.run_self_check(
             root,
@@ -366,6 +407,14 @@ def main() -> None:
         action="store_true",
         help="Print full state JSON instead of a compact summary.",
     )
+    parser.add_argument(
+        "--skip-knowledge-map-gate",
+        action="store_true",
+        help=(
+            "Bypass the knowledge-map gate. Use only for diagnostics; the loop "
+            "should normally refuse to enter Build without recorded ADRs."
+        ),
+    )
     args = parser.parse_args()
 
     root = Path(args.root).expanduser().resolve()
@@ -378,6 +427,7 @@ def main() -> None:
         state_path,
         slice_budget=args.slice_budget,
         run_tests=not args.skip_tests,
+        enforce_knowledge_map_gate=not args.skip_knowledge_map_gate,
     )
 
     if args.json:

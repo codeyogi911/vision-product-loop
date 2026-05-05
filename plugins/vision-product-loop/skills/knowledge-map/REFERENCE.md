@@ -77,13 +77,17 @@ After in-scope decisions are recorded, draft `ARCHITECTURE.md` in matklad style:
 
 ## 7. Establish maps
 
-Generate `CLAUDE.md` (primary, ≤100 lines) as the table of contents only:
+`AGENTS.md` is canonical. `CLAUDE.md` is a symlink to it.
+
+Generate `AGENTS.md` (≤100 lines) as the table of contents only:
 
 - Short purpose statement (1–2 sentences).
 - Pointers to `VISION.md`, `ARCHITECTURE.md`, `docs/` tree, run entry points.
 - Short note on the operating loop pointer.
 
-Generate `AGENTS.md` as a parallel for Codex compat with the same content. Reject encyclopedia drift; the linter enforces the line budget.
+Then create `CLAUDE.md` as a symlink to `AGENTS.md` (`ln -s AGENTS.md CLAUDE.md`). The scaffold script does this automatically; on filesystems without symlink support it falls back to a one-line `CLAUDE.md` that points at `AGENTS.md`. Reject encyclopedia drift; the linter enforces the line budget against the canonical file.
+
+The split-file historical convention (CLAUDE.md and AGENTS.md as parallel files) is deprecated — it produced drift between Claude Code and Codex when one map was edited and the other was not.
 
 ## 8. Establish docs/ layout
 
@@ -147,7 +151,8 @@ python3 plugins/vision-product-loop/scripts/lint_knowledge_map.py --root <projec
 
 Checks:
 
-- `CLAUDE.md` and `AGENTS.md` within the line budget (default 100).
+- `AGENTS.md` (and `CLAUDE.md` if not a symlink) within the line budget (default 100).
+- `CLAUDE.md` is a symlink to `AGENTS.md`; if both exist as separate regular files with diverging content the linter emits `map-divergence`.
 - All cross-links in map files resolve to existing paths within the project root.
 - ADRs have all four required Nygard sections (Status, Context, Decision, Consequences).
 - `docs/exec-plans/active/` entries with a slug listed in `.vision-loop/state.json` `closed_exec_plans` should have moved to `completed/`.

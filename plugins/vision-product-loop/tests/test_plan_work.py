@@ -51,6 +51,19 @@ class WorkPlanTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
+        # Satisfy the knowledge-map gate so plan_work returns a sprint, not a
+        # gate-blocked stub. Tests focused on planning logic (not the gate)
+        # need this fixture; gate behaviour has its own tests below.
+        adr_dir = root / "docs" / "adr"
+        adr_dir.mkdir(parents=True, exist_ok=True)
+        (adr_dir / "0002-pick-mobile-surface.md").write_text(
+            "# 2. Pick mobile surface\n\n"
+            "## Status\n\nAccepted\n\n"
+            "## Context\n\nFounders need mobile-first approval flows.\n\n"
+            "## Decision\n\nShip a mobile web surface.\n\n"
+            "## Consequences\n\nDesktop comes later.\n",
+            encoding="utf-8",
+        )
 
     def test_builds_task_plan_from_open_todo(self) -> None:
         with tempfile.TemporaryDirectory(prefix="vision-plan-work-") as tmp:
@@ -109,6 +122,43 @@ class WorkPlanTests(unittest.TestCase):
         task = plan["sprint"]["tasks"][0]
         self.assertEqual(task["source"], "loop-state-gap")
         self.assertEqual(task["title"], "operating-ledger-review")
+
+    def test_gate_blocks_plan_when_no_product_adrs_exist(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="vision-plan-work-gate-") as tmp:
+            root = Path(tmp)
+            (root / "VISION.md").write_text("# Vision\n", encoding="utf-8")
+            # No docs/adr/ directory — gate must fire.
+            plan = plan_work_module.plan_work(root)
+
+        self.assertNotIn("sprint", plan)
+        self.assertEqual(plan["gate"]["reason"], "knowledge_map_required")
+        self.assertIn("knowledge-map", " ".join(plan["gate"]["next_actions"]))
+
+    def test_gate_blocks_plan_with_only_bootstrap_adr(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="vision-plan-work-gate-") as tmp:
+            root = Path(tmp)
+            (root / "VISION.md").write_text("# Vision\n", encoding="utf-8")
+            adr_dir = root / "docs" / "adr"
+            adr_dir.mkdir(parents=True)
+            (adr_dir / "0001-record-architecture-decisions.md").write_text(
+                "# 1. Record architecture decisions\n", encoding="utf-8"
+            )
+            plan = plan_work_module.plan_work(root)
+
+        self.assertNotIn("sprint", plan)
+        self.assertEqual(plan["gate"]["reason"], "knowledge_map_required")
+
+    def test_gate_can_be_bypassed_for_diagnostics(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="vision-plan-work-gate-") as tmp:
+            root = Path(tmp)
+            (root / "VISION.md").write_text("# Vision\n", encoding="utf-8")
+            plan = plan_work_module.plan_work(
+                root,
+                enforce_knowledge_map_gate=False,
+            )
+
+        self.assertNotIn("gate", plan)
+        self.assertIn("sprint", plan)
 
     def test_skips_todo_with_completed_status_detail(self) -> None:
         with tempfile.TemporaryDirectory(prefix="vision-plan-work-") as tmp:
