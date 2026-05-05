@@ -1,6 +1,6 @@
 {
   "name": "vision-product-loop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A Claude Code plugin for turning a product vision into an iterative build loop.",
   "author": {
     "name": "Shashwat Jain"

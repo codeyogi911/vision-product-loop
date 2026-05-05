@@ -8,7 +8,7 @@
       "name": "vision-product-loop",
       "source": "./plugins/vision-product-loop",
       "description": "Turn a product vision into an iterative build loop with grilling, harnesses, and evidence-driven iteration.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "license": "MIT",
       "homepage": "https://github.com/codeyogi911/vision-product-loop",
       "repository": "https://github.com/codeyogi911/vision-product-loop",
