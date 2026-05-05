@@ -14,5 +14,6 @@
     "iteration",
     "agents",
     "loop"
-  ]
+  ],
+  "skills": "./skills"
 }
