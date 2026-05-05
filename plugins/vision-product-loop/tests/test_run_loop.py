@@ -39,6 +39,8 @@ class RunLoopTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmpdir = Path(tempfile.mkdtemp(prefix="vision-run-loop-test-"))
         self.addCleanup(lambda: shutil.rmtree(self.tmpdir, ignore_errors=True))
+        self.external_target = Path(tempfile.mkdtemp(prefix="vision-applied-target-"))
+        self.addCleanup(lambda: shutil.rmtree(self.external_target, ignore_errors=True))
         self.plugin_root = self.tmpdir / "plugins" / "vision-product-loop"
         shutil.copytree(REPO_ROOT / "plugins" / "vision-product-loop", self.plugin_root)
         shutil.copy2(REPO_ROOT / "VISION.md", self.tmpdir / "VISION.md")
@@ -46,7 +48,34 @@ class RunLoopTests(unittest.TestCase):
         shutil.copytree(REPO_ROOT / "visions", self.tmpdir / "visions")
         self.state_path = self.tmpdir / ".vision-loop" / "state.json"
 
+    def write_applied_proof(self) -> None:
+        proof_path = self.tmpdir / ".vision-loop" / "applied-proof.json"
+        proof_path.parent.mkdir(parents=True, exist_ok=True)
+        (self.external_target / "app.py").write_text("print('shipped')\n", encoding="utf-8")
+        proof = {
+            "target_project": str(self.external_target),
+            "target_is_external": True,
+            "vision_item": "Turn one fuzzy product TODO into shipped behavior.",
+            "changed_files": ["app.py"],
+            "change_summary": ["Added the user-visible behavior promised by the target vision."],
+            "evidence": [
+                {
+                    "kind": "target-test",
+                    "command": "python3 app.py",
+                    "passed": True,
+                    "detail": "Target project command produced the expected output.",
+                }
+            ],
+            "would_not_have_happened_without_loop": (
+                "The loop selected the smallest vision-backed task, changed the target, "
+                "and recorded target-local evidence."
+            ),
+        }
+        proof_path.write_text(json.dumps(proof, indent=2) + "\n", encoding="utf-8")
+
     def test_marks_complete_when_no_gaps_and_validation_passes(self) -> None:
+        self.write_applied_proof()
+
         state, exit_code = run_loop_module.run_loop(
             self.tmpdir,
             self.plugin_root,
@@ -69,6 +98,8 @@ class RunLoopTests(unittest.TestCase):
         self.assertEqual(written["status"], "complete")
 
     def test_self_check_exits_zero_after_loop_marks_complete(self) -> None:
+        self.write_applied_proof()
+
         run_loop_module.run_loop(
             self.tmpdir,
             self.plugin_root,
@@ -87,6 +118,20 @@ class RunLoopTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(state["status"], "complete")
         self.assertEqual(state["stop_reason"], "vision_complete")
+
+    def test_reports_applied_project_gap_when_no_external_proof_exists(self) -> None:
+        state, exit_code = run_loop_module.run_loop(
+            self.tmpdir,
+            self.plugin_root,
+            self.state_path,
+            slice_budget=5,
+            run_tests=False,
+        )
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(state["status"], "planning")
+        self.assertEqual(state["stop_reason"], "gap_selected")
+        self.assertEqual(state["selected_gap"]["id"], "missing-applied-project-proof")
 
     def test_reports_selected_gap_when_plugin_is_incomplete(self) -> None:
         (self.plugin_root / "README.md").unlink()

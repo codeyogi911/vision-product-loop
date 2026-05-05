@@ -23,6 +23,7 @@ DEFAULT_PLUGIN_ROOT = Path("plugins") / PLUGIN_NAME
 DEFAULT_STATE_PATH = Path(".vision-loop") / "state.json"
 DEFAULT_VISION_FILE = Path("VISION.md")
 DEFAULT_RUBRIC_FILE = Path("capability_rubric.json")
+DEFAULT_APPLIED_PROOF_FILE = Path(".vision-loop") / "applied-proof.json"
 
 
 @dataclass
@@ -60,6 +61,14 @@ def resolve_artifact(root: Path, plugin_root: Path, artifact: str) -> Path:
     if artifact.startswith("plugin:"):
         return plugin_root / artifact.removeprefix("plugin:")
     raise ValueError(f"Unsupported artifact location: {artifact}")
+
+
+def is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+    except ValueError:
+        return False
+    return True
 
 
 def add_gap(
@@ -143,6 +152,9 @@ def inspect_skill(skill_path: Path, gaps: list[Gap], evidence: list[Evidence]) -
         return
 
     skill_text = read_text(skill_path)
+    reference_path = skill_path.parent / "REFERENCE.md"
+    if reference_path.is_file():
+        skill_text = skill_text + "\n" + read_text(reference_path)
     evidence.append(Evidence("skill_exists", True, f"Loaded {skill_path}"))
 
     skill_requirements = (
@@ -385,6 +397,10 @@ def inspect_capability_rubric(
                 continue
 
             artifact_text = read_text(artifact_path)
+            if artifact_path.name == "SKILL.md":
+                companion = artifact_path.parent / "REFERENCE.md"
+                if companion.is_file():
+                    artifact_text = artifact_text + "\n" + read_text(companion)
             missing = [needle for needle in needles if needle.lower() not in artifact_text.lower()]
             if missing:
                 add_gap(
@@ -452,6 +468,138 @@ def inspect_toy_project_proof(root: Path, evidence: list[Evidence]) -> None:
     )
 
 
+def evidence_item_is_bootstrap(item: dict[str, Any]) -> bool:
+    text = " ".join(
+        str(item.get(key, ""))
+        for key in ("id", "kind", "check", "command", "detail", "description")
+    ).lower()
+    bootstrap_markers = (
+        "self_check.py",
+        "run_loop.py",
+        "run_toy_proof.py",
+        "toy-proof",
+        "toy_project",
+        "plugin-self-check",
+    )
+    return any(marker in text for marker in bootstrap_markers)
+
+
+def inspect_applied_project_proof(
+    root: Path,
+    plugin_root: Path,
+    gaps: list[Gap],
+    evidence: list[Evidence],
+) -> None:
+    proof_path = root / DEFAULT_APPLIED_PROOF_FILE
+    if not proof_path.is_file():
+        evidence.append(
+            Evidence(
+                "applied_project_proof",
+                False,
+                f"Missing {proof_path}",
+            )
+        )
+        add_gap(
+            gaps,
+            "missing-applied-project-proof",
+            "No applied project proof has been recorded",
+            f"{proof_path} does not exist.",
+            (
+                "Run the plugin on a real target project and record target_project, "
+                "vision_item, changed_files, change_summary, passing evidence, and "
+                "why the loop mattered in .vision-loop/applied-proof.json."
+            ),
+            proof_path,
+        )
+        return
+
+    try:
+        proof = load_json(proof_path)
+    except json.JSONDecodeError as exc:
+        evidence.append(Evidence("applied_project_proof", False, str(exc)))
+        add_gap(
+            gaps,
+            "invalid-applied-project-proof-json",
+            "Applied project proof is not valid JSON",
+            str(exc),
+            "Fix .vision-loop/applied-proof.json so the evidence gate can read it.",
+            proof_path,
+        )
+        return
+
+    errors: list[str] = []
+    target_project = proof.get("target_project") or proof.get("target")
+    if not isinstance(target_project, str) or not target_project.strip():
+        errors.append("target_project must name the real target repository")
+    else:
+        target_path = Path(target_project).expanduser()
+        if not target_path.is_absolute():
+            target_path = root / target_path
+        target_path = target_path.resolve()
+        if is_relative_to(target_path, root) or is_relative_to(target_path, plugin_root):
+            errors.append("target_project must be outside this plugin repository")
+
+    if proof.get("target_is_external") is not True:
+        errors.append("target_is_external must be true")
+    if not isinstance(proof.get("vision_item"), str) or not proof["vision_item"].strip():
+        errors.append("vision_item must name the fuzzy product item exercised")
+    if not isinstance(proof.get("would_not_have_happened_without_loop"), str) or not proof[
+        "would_not_have_happened_without_loop"
+    ].strip():
+        errors.append("would_not_have_happened_without_loop must explain the loop's contribution")
+
+    changed_files = proof.get("changed_files")
+    if not isinstance(changed_files, list) or not any(
+        isinstance(item, str) and item.strip() for item in changed_files
+    ):
+        errors.append("changed_files must list at least one target-project file")
+
+    change_summary = proof.get("change_summary")
+    if not isinstance(change_summary, list) or not any(
+        isinstance(item, str) and item.strip() for item in change_summary
+    ):
+        errors.append("change_summary must list at least one shipped change")
+
+    evidence_items = proof.get("evidence")
+    if not isinstance(evidence_items, list) or not evidence_items:
+        errors.append("evidence must include at least one project-local proof item")
+        passed_items: list[dict[str, Any]] = []
+    else:
+        passed_items = [
+            item
+            for item in evidence_items
+            if isinstance(item, dict) and item.get("passed") is True
+        ]
+        if not passed_items:
+            errors.append("evidence must include at least one passed item")
+        if not any(not evidence_item_is_bootstrap(item) for item in passed_items):
+            errors.append("passing evidence cannot be only self-check, run-loop, or toy proof")
+
+    if errors:
+        detail = "; ".join(errors)
+        evidence.append(Evidence("applied_project_proof", False, detail))
+        add_gap(
+            gaps,
+            "invalid-applied-project-proof",
+            "Applied project proof is incomplete",
+            detail,
+            "Record a real target-project diff and project-local evidence, not only plugin bootstrap checks.",
+            proof_path,
+        )
+        return
+
+    evidence.append(
+        Evidence(
+            "applied_project_proof",
+            True,
+            (
+                f"{target_project} changed_files={len(changed_files)} "
+                f"evidence_items={len(evidence_items)}"
+            ),
+        )
+    )
+
+
 def build_state(
     root: Path,
     vision_file: Path,
@@ -486,6 +634,11 @@ def build_state(
         "vision_file": str(vision_file.relative_to(root)),
         "phase": "reflect" if evidence else "research",
         "iteration": 0,
+        "current_task": (
+            "Read VISION.md, inspect the current plugin, produce a gap list, "
+            "choose one gap, patch files, run validation, and update loop state."
+        ),
+        "subtasks": [],
         "current_slice": (
             "Read VISION.md, inspect the current plugin, produce a gap list, "
             "choose one gap, patch files, run validation, and update loop state."
@@ -502,6 +655,7 @@ def build_state(
                     "plugin manifest loads",
                     "main skill exists",
                     "capability rubric markers are satisfied",
+                    "applied project proof is present before completion",
                 ],
                 "pass_condition": "exit code 0 when a gap is selected or vision is complete; exit code 2 when gap detection is exhausted",
             }
@@ -577,6 +731,7 @@ def run_self_check(
     inspect_tests(plugin_root, gaps, evidence)
     inspect_capability_rubric(root, plugin_root, gaps, evidence)
     inspect_toy_project_proof(root, evidence)
+    inspect_applied_project_proof(root, plugin_root, gaps, evidence)
     if run_tests:
         evidence.append(run_validation_tests(root, plugin_root, gaps))
 

@@ -38,6 +38,7 @@ BASE_EVIDENCE_CHECKS = (
     "readme_exists",
     "self_check_tests_exist",
     "capability_rubric_loaded",
+    "applied_project_proof",
 )
 
 
@@ -84,6 +85,7 @@ def build_harness_registry(require_validation: bool) -> list[dict[str, Any]]:
                 "plugin manifest loads",
                 "main skill exists",
                 "capability rubric markers are satisfied",
+                "applied project proof is recorded before completion",
             ],
             "pass_condition": "exit code 0 when a gap is selected or the vision is complete",
         }
@@ -141,6 +143,8 @@ def build_final_state(
         "vision_file": str(DEFAULT_VISION_FILE),
         "phase": "reflect",
         "iteration": iteration,
+        "current_task": "Run the Vision Product Loop operating cycle against VISION.md.",
+        "subtasks": [],
         "current_slice": "Run the Vision Product Loop operating cycle against VISION.md.",
         "gaps": gaps,
         "selected_gap": self_state.get("selected_gap"),
@@ -247,7 +251,7 @@ def run_loop(
         loop_events.append(
             phase_event(
                 "verify",
-                "Verified the direct plugin self-check evidence against VISION.md.",
+                "Verified bootstrap checks and applied-project evidence against VISION.md.",
                 self_check_exit_code=self_exit_code,
                 direct_evidence_passed=required_evidence_passed(
                     evidence,
@@ -320,6 +324,8 @@ def run_loop(
         "vision_file": str(DEFAULT_VISION_FILE),
         "phase": "reflect",
         "iteration": slice_budget,
+        "current_task": "Run the Vision Product Loop operating cycle against VISION.md.",
+        "subtasks": [],
         "status": "blocked",
         "stop_reason": "slice_budget_exhausted",
         "loop_events": loop_events,

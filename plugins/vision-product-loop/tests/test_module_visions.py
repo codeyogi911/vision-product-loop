@@ -47,12 +47,11 @@ class ModuleVisionTests(unittest.TestCase):
         self.assertIn("Open Questions", text)
 
     def test_skill_uses_architecture_deepening_language(self) -> None:
-        text = (
-            PLUGIN_ROOT
-            / "skills"
-            / "vision-product-loop"
-            / "SKILL.md"
-        ).read_text(encoding="utf-8")
+        skill_dir = PLUGIN_ROOT / "skills" / "vision-product-loop"
+        text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+        reference = skill_dir / "REFERENCE.md"
+        if reference.is_file():
+            text = text + "\n" + reference.read_text(encoding="utf-8")
 
         self.assertIn("improve-codebase-architecture", text)
         self.assertIn("CONTEXT.md", text)

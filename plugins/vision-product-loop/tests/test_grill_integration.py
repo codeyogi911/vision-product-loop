@@ -20,12 +20,11 @@ class GrillIntegrationTests(unittest.TestCase):
         self.assertIn("VISION.md", text)
 
     def test_main_skill_points_to_bundled_grill(self) -> None:
-        text = (
-            PLUGIN_ROOT
-            / "skills"
-            / "vision-product-loop"
-            / "SKILL.md"
-        ).read_text(encoding="utf-8")
+        skill_dir = PLUGIN_ROOT / "skills" / "vision-product-loop"
+        text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+        reference = skill_dir / "REFERENCE.md"
+        if reference.is_file():
+            text = text + "\n" + reference.read_text(encoding="utf-8")
 
         self.assertIn("skills/grill-me/SKILL.md", text)
         self.assertIn("recommended answer", text)

@@ -291,6 +291,71 @@
       ]
     },
     {
+      "id": "task-planning-cadence",
+      "title": "Sprint task planning and task-end validation",
+      "description": "Applied project work is planned as sprint, task, and subtasks, with broad validation deferred to task close instead of repeated after every subtask.",
+      "requirements": [
+        {
+          "id": "root-task-planning-contract",
+          "artifact": "root:VISION.md",
+          "all": [
+            "Sprint Task Planning",
+            "Sprint -> Task -> Subtasks -> Task-end validation -> Reflection",
+            "test_cadence",
+            "task_end"
+          ]
+        },
+        {
+          "id": "context-task-planning-terms",
+          "artifact": "root:CONTEXT.md",
+          "all": [
+            "Sprint Task Planning",
+            "Task is the coherent product outcome",
+            "task-end validation"
+          ]
+        },
+        {
+          "id": "skill-task-planning-workflow",
+          "artifact": "plugin:skills/vision-product-loop/SKILL.md",
+          "all": [
+            "plan_work.py",
+            "Sprint -> Task -> Subtasks -> Task-end validation -> Reflection",
+            "test_cadence: task_end",
+            "Do not run broad regression"
+          ]
+        },
+        {
+          "id": "readme-task-planning-docs",
+          "artifact": "plugin:README.md",
+          "all": [
+            "plan_work.py",
+            "planning_granularity: sprint_task_subtask",
+            "test_cadence: task_end",
+            "Task-end validation"
+          ]
+        },
+        {
+          "id": "work-planner-script",
+          "artifact": "plugin:scripts/plan_work.py",
+          "all": [
+            "plan_work",
+            "sprint_task_subtask",
+            "task_end",
+            "subtasks"
+          ]
+        },
+        {
+          "id": "work-planner-tests",
+          "artifact": "plugin:tests/test_plan_work.py",
+          "all": [
+            "test_builds_task_plan_from_open_todo",
+            "test_task_end_validation_keeps_broad_tests_out_of_subtasks",
+            "test_prefers_open_state_gap_over_todo"
+          ]
+        }
+      ]
+    },
+    {
       "id": "adaptive-realization",
       "title": "Adaptive end-to-end realization",
       "description": "The skill can take a user from vision to project end to end by selecting or creating the tools needed for that specific goal.",

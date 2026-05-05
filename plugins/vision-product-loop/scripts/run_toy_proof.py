@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run an end-to-end toy project proof for Vision Product Loop."""
+"""Run the generated toy-project regression proof for Vision Product Loop."""
 
 from __future__ import annotations
 
@@ -18,7 +18,9 @@ import plan_harness
 
 TOY_VISION = """# Product Promise
 
-This toy project proves the Vision Product Loop can start from a vision, discover that no harness exists, create the smallest missing proof harness, run it, and record evidence.
+This toy project checks that the Vision Product Loop can start from a vision, discover that no harness exists, create the smallest missing proof harness, run it, and record evidence.
+
+It is bootstrap evidence only. It does not prove the loop shipped a useful change in a real target project.
 
 ## Primary Users
 

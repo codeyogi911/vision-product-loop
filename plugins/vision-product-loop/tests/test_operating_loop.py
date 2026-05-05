@@ -31,12 +31,11 @@ class OperatingLoopTests(unittest.TestCase):
         self.assertIn("evidence-producing capability", text)
 
     def test_skill_uses_loop_phases_and_harness_interface(self) -> None:
-        text = (
-            PLUGIN_ROOT
-            / "skills"
-            / "vision-product-loop"
-            / "SKILL.md"
-        ).read_text(encoding="utf-8")
+        skill_dir = PLUGIN_ROOT / "skills" / "vision-product-loop"
+        text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+        reference = skill_dir / "REFERENCE.md"
+        if reference.is_file():
+            text = text + "\n" + reference.read_text(encoding="utf-8")
 
         for phase in LOOP_PHASES:
             self.assertIn(f"{phase}:", text)

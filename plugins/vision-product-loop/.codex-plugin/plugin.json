@@ -3,12 +3,11 @@
   "version": "0.1.0",
   "description": "A Codex plugin for turning a product vision into an iterative build loop.",
   "author": {
-    "name": "Vision Product Loop Maintainers",
-    "email": "maintainers@example.com",
-    "url": "https://example.com/vision-product-loop"
+    "name": "Shashwat Jain",
+    "url": "https://github.com/codeyogi911"
   },
-  "homepage": "https://example.com/vision-product-loop",
-  "repository": "https://example.com/vision-product-loop.git",
+  "homepage": "https://github.com/codeyogi911/vision-product-loop",
+  "repository": "https://github.com/codeyogi911/vision-product-loop.git",
   "license": "MIT",
   "keywords": [
     "vision",
@@ -29,9 +28,7 @@
       "Code",
       "Review"
     ],
-    "websiteURL": "https://example.com/vision-product-loop",
-    "privacyPolicyURL": "https://example.com/privacy",
-    "termsOfServiceURL": "https://example.com/terms",
+    "websiteURL": "https://github.com/codeyogi911/vision-product-loop",
     "defaultPrompt": [
       "Turn this vision into an implementation loop.",
       "Grill me until this product vision is crisp.",

@@ -1,0 +1,24 @@
+{
+  "name": "vision-product-loop",
+  "owner": {
+    "name": "Shashwat Jain"
+  },
+  "plugins": [
+    {
+      "name": "vision-product-loop",
+      "source": "./plugins/vision-product-loop",
+      "description": "Turn a product vision into an iterative build loop with grilling, harnesses, and evidence-driven iteration.",
+      "version": "0.1.0",
+      "license": "MIT",
+      "homepage": "https://github.com/codeyogi911/vision-product-loop",
+      "repository": "https://github.com/codeyogi911/vision-product-loop",
+      "keywords": [
+        "vision",
+        "product",
+        "iteration",
+        "agents",
+        "loop"
+      ]
+    }
+  ]
+}
